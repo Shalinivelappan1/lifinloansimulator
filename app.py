@@ -265,12 +265,18 @@ Lower total cost option is financially better.
     ax.axhline(0,linestyle="--")
     st.pyplot(fig)
 
-    st.info("""
-Where the line crosses zero = break-even interest rate.
+   st.markdown("""
+### 📈 How to read this chart
 
-Below zero → buying cheaper  
-Above zero → renting cheaper  
+The horizontal line at **0** is the break-even point.
+
+- When the curve is **below 0** → Buying is financially cheaper  
+- When the curve is **above 0** → Renting is financially cheaper  
+
+The point where the curve crosses zero shows the  
+**interest rate at which the decision flips**.
 """)
+
 
     # =========================
     # HEATMAP
@@ -298,10 +304,29 @@ Above zero → renting cheaper
     sns.heatmap(df,cmap="RdYlGn",center=0)
     st.pyplot(fig2)
 
-    st.info("""
-Green → Buying better  
-Red → Renting better  
+    st.markdown("""
+### 🔥 How to read this heatmap
 
-There is no single correct decision.  
-It depends on interest rates and price growth.
+Each cell shows whether **buying** or **renting** is financially better under different assumptions.
+
+**Axes**
+- X-axis → Interest rate  
+- Y-axis → House price growth  
+
+**Colors**
+- 🟢 Green → Buying is financially better  
+- 🔴 Red → Renting is financially better  
+- 🟡 Yellow → Very close decision  
+
+**Key learning**
+
+There is no single correct answer to buy vs rent.  
+The decision depends on assumptions about:
+
+• Interest rates  
+• Property price growth  
+• Rent levels  
+
+Small changes in these can flip the decision.
 """)
+
