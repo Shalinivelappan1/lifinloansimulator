@@ -303,7 +303,7 @@ Lower total cost option is financially better.
     )
 
     fig2, ax2 = plt.subplots()
-    sns.heatmap(df, cmap="RdYlGn", center=0)
+    sns.heatmap(df, cmap="RdYlGn_r", center=0)
     st.pyplot(fig2)
 
     st.markdown("""
