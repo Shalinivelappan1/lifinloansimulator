@@ -1,11 +1,12 @@
 import streamlit as st
 import math
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪", layout="centered")
+# =========================================================
+# PAGE CONFIG
+# =========================================================
+st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪")
 
 # =========================================================
 # FUNCTIONS
@@ -38,46 +39,31 @@ def npv_stream(payment, discount_rate, months):
 # HEADER
 # =========================================================
 st.title("🧪 Debt Decision Lab")
-st.caption("Learn how debt decisions affect your financial future")
 
 st.info(
 """
-**This simulator is for learning.**
+This lab is for **learning and exploration**.
 
 You will explore:
-• How EMIs really behave  
-• Why prepayment matters  
-• When investing beats prepaying  
-• How NPV helps make decisions
+• How loans behave  
+• Prepayment impact  
+• Prepay vs invest  
+• Case decision using NPV
+-Developed by Dr.Shalini Velappan, IIM Trichy
 """
 )
 
 # =========================================================
 # GLOBAL INPUTS
 # =========================================================
-st.subheader("📥 Your Loan Inputs")
+st.subheader("📥 Your Loan")
 
 loan_amount = st.number_input("Loan Amount (₹)", value=500000)
-interest_rate = st.number_input("Interest Rate (% per year)", value=10.0)
+interest_rate = st.number_input("Loan Interest Rate (%)", value=10.0)
 remaining_years = st.number_input("Remaining Years", value=5)
 
 emi, n, r = calculate_emi(loan_amount, interest_rate, remaining_years)
-
-st.success(f"Monthly EMI ≈ ₹ {emi:,.0f}")
-
-with st.expander("📘 What is EMI?"):
-    st.write("""
-EMI = Equated Monthly Installment  
-It includes:
-• Interest payment  
-• Principal repayment  
-
-Early years → mostly interest  
-Later years → mostly principal  
-
-Banks earn interest first.  
-You reduce principal slowly.
-""")
+st.write(f"💸 EMI ≈ ₹ {emi:,.0f}")
 
 st.markdown("---")
 
@@ -87,39 +73,30 @@ st.markdown("---")
 tab1, tab2, tab3 = st.tabs([
     "🧾 EMI Lab",
     "🧨 Prepayment Lab",
-    "⚖️ Decision + NPV Lab"
+    "⚖️ Decision Lab"
 ])
 
 # =========================================================
 # TAB 1 — EMI LAB
 # =========================================================
 with tab1:
-    st.header("🧾 Understanding Your Loan")
+    st.header("EMI Lab: Understand Your Loan")
 
     total_payment = emi * n
     total_interest = total_payment - loan_amount
 
-    c1, c2 = st.columns(2)
-    c1.metric("Total Interest Paid", f"₹ {total_interest:,.0f}")
-    c2.metric("Total Payment", f"₹ {total_payment:,.0f}")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Monthly EMI", f"₹ {emi:,.0f}")
+    c2.metric("Total Interest", f"₹ {total_interest:,.0f}")
+    c3.metric("Total Payment", f"₹ {total_payment:,.0f}")
 
-    with st.expander("🎓 Teaching Insight"):
-        st.write("""
-Students often think interest is small.  
-But over long tenures:
-
-Interest paid can equal the loan itself.
-
-This is why:
-Long tenure = bank profits  
-Short tenure = borrower freedom
-""")
+    st.info("A loan is a multi-year contract with your future self.")
 
 # =========================================================
 # TAB 2 — PREPAYMENT LAB
 # =========================================================
 with tab2:
-    st.header("🧨 Prepayment Lab")
+    st.header("Prepayment Lab")
 
     prepay_year = st.number_input("Prepay after years", 1, remaining_years, 2)
     prepay_amount = st.number_input("Prepayment amount", value=50000)
@@ -133,27 +110,18 @@ with tab2:
         new_n = int(math.ceil(new_n))
         months_saved = (n - k) - new_n
 
-        st.metric("Months Saved", months_saved)
-
-        st.info("""
-💡 Prepayment reduces:
-• Interest burden  
-• Time in debt  
-• Financial stress  
-
-Early prepayment has **maximum impact**.
-""")
+        st.metric("Months Reduced", months_saved)
 
 # =========================================================
 # TAB 3 — DECISION LAB
 # =========================================================
 with tab3:
-    st.header("⚖️ Prepay vs Invest")
+    st.header("Decision Lab: Prepay or Invest")
 
-    extra_monthly = st.number_input("Extra per month", value=5000)
-    expected_return = st.number_input("Investment return %", value=12.0)
+    extra_monthly = st.number_input("Extra money per month", value=5000)
+    expected_return = st.number_input("Expected investment return (%)", value=12.0)
 
-    # Prepay sim
+    # ---------- Prepay ----------
     balance = loan_amount
     months = 0
     total_payment_with_prepay = 0
@@ -174,79 +142,84 @@ with tab3:
     c2.metric("Investment Value", f"₹ {fv:,.0f}")
 
     if fv > interest_saved:
-        st.success("Investing gives higher mathematical value.")
+        st.success("Investing wins mathematically")
     else:
-        st.warning("Prepaying is financially safer.")
-
-    with st.expander("🎓 Teaching Insight"):
-        st.write("""
-Prepay return = guaranteed = loan interest rate  
-Investment return = uncertain  
-
-So decision depends on:
-• Risk tolerance  
-• Liquidity needs  
-• Psychological comfort
-""")
+        st.warning("Prepaying wins mathematically")
 
     st.markdown("---")
 
     # =========================================================
-    # NPV SECTION
+    # CASE SCENARIOS
     # =========================================================
-    st.header("🏠 Case Decision Using NPV")
+    st.header("🏠 Case Scenarios")
 
     rent = st.number_input("Monthly Rent", value=8000)
-    discount_rate = st.number_input("Discount Rate %", value=8.0)
-    price_growth = st.number_input("House Price Growth %", value=3.0)
+    discount_rate = st.number_input("Discount rate for NPV (%)", value=8.0)
+    price_growth = st.number_input("House price growth (%)", value=3.0)
+
+    st.write("Click scenarios to see decision change")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    if col1.button("Scenario 1"):
+        price_growth = 0
+        st.info("No price growth → renting stronger")
+
+    if col2.button("Scenario 2"):
+        price_growth = 10
+        st.info("High price growth → buying stronger")
+
+    if col3.button("Scenario 3"):
+        interest_rate += 1
+        st.info("Interest rises → renting stronger")
+
+    if col4.button("Scenario 4"):
+        rent *= 1.25
+        st.info("Rent rises → buying stronger")
 
     emi_case, n_case, _ = calculate_emi(loan_amount, interest_rate, remaining_years)
 
     pv_buy = npv_stream(emi_case, discount_rate, n_case)
     pv_rent = npv_stream(rent, discount_rate, n_case)
 
-    future_price = loan_amount*((1+price_growth/100)**remaining_years)
-    pv_resale = future_price/((1+discount_rate/100)**remaining_years)
+    future_price = loan_amount * ((1 + price_growth/100) ** remaining_years)
+    pv_resale = future_price / ((1 + discount_rate/100) ** remaining_years)
 
-    npv_buy = pv_buy - pv_resale
-    diff = npv_buy - pv_rent
+    npv_buy_total = pv_buy - pv_resale
+    npv_rent_total = pv_rent
+    diff = npv_buy_total - npv_rent_total
 
-    d1,d2,d3 = st.columns(3)
-    d1.metric("NPV Buy", f"₹ {npv_buy:,.0f}")
-    d2.metric("NPV Rent", f"₹ {pv_rent:,.0f}")
-    d3.metric("Buy − Rent", f"₹ {diff:,.0f}")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("NPV Buy", f"₹ {npv_buy_total:,.0f}")
+    c2.metric("NPV Rent", f"₹ {npv_rent_total:,.0f}")
+    c3.metric("Buy − Rent", f"₹ {diff:,.0f}")
 
-    with st.expander("🎓 What does NPV mean?"):
-        st.write("""
-NPV converts future payments into today's value.
+    if diff < 0:
+        st.success("Buying is better")
+    else:
+        st.warning("Renting is better")
 
-Lower NPV cost = better option.
-
-So:
-If Buy NPV < Rent NPV → Buy  
-If Rent NPV < Buy NPV → Rent
-""")
+    st.markdown("---")
 
     # =========================================================
     # GRAPH
     # =========================================================
-    st.subheader("📈 NPV vs Interest Rate")
+    st.subheader("NPV vs Interest Rate")
 
-    rates = np.linspace(2,15,25)
-    vals=[]
+    rates = np.linspace(2, 15, 30)
+    npvs = []
 
     for rate in rates:
-        emi_t,_,_=calculate_emi(loan_amount,rate,remaining_years)
-        pv_buy_t=npv_stream(emi_t,discount_rate,n_case)
-        future_price_t=loan_amount*((1+price_growth/100)**remaining_years)
-        pv_resale_t=future_price_t/((1+discount_rate/100)**remaining_years)
-        vals.append((pv_buy_t-pv_resale_t)-pv_rent)
+        emi_temp, _, _ = calculate_emi(loan_amount, rate, remaining_years)
+        pv_buy_temp = npv_stream(emi_temp, discount_rate, n_case)
+        future_price_temp = loan_amount*((1+price_growth/100)**remaining_years)
+        pv_resale_temp = future_price_temp/((1+discount_rate/100)**remaining_years)
+        npv_temp = (pv_buy_temp - pv_resale_temp) - pv_rent
+        npvs.append(npv_temp)
 
-    fig,ax=plt.subplots()
-    ax.plot(rates,vals)
-    ax.axhline(0,linestyle="--")
+    fig, ax = plt.subplots()
+    ax.plot(rates, npvs)
+    ax.axhline(0, linestyle="--")
     ax.set_xlabel("Interest Rate")
     ax.set_ylabel("Buy − Rent NPV")
     st.pyplot(fig)
-
-    st.caption("Where line crosses zero → decision flips")
