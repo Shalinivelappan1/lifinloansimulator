@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪")
+st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪", layout="centered")
 
 # =========================================================
 # FUNCTIONS
@@ -40,24 +40,26 @@ def npv_stream(payment, discount_rate, months):
 st.title("🧪 Debt Decision Lab")
 
 st.info("""
-This simulator helps you understand:
+This simulator helps you explore:
 
-• How loans behave  
+• How EMIs really work  
 • Why prepayment matters  
 • Prepay vs invest decision  
 • Buy vs rent using NPV  
+• How assumptions change decisions
+-Developed by Prof.Shalini Velappan, IIM Trichy
 """)
 
 # =========================================================
 # INPUTS
 # =========================================================
 loan_amount = st.number_input("Loan Amount (₹)", value=500000)
-interest_rate = st.number_input("Interest Rate (%)", value=10.0)
+interest_rate = st.number_input("Loan Interest Rate (%)", value=10.0)
 remaining_years = st.number_input("Remaining Tenure (Years)", value=5)
 
 emi, n, r = calculate_emi(loan_amount, interest_rate, remaining_years)
+st.write(f"💸 Monthly EMI ≈ ₹ {emi:,.0f}")
 
-st.write(f"💸 EMI ≈ ₹ {emi:,.0f}")
 st.markdown("---")
 
 # =========================================================
@@ -90,13 +92,18 @@ with tab1:
     if ratio < 0.3:
         st.success("🟢 Light burden")
     elif ratio < 0.7:
-        st.warning("🟠 Heavy burden: a large share of payment is interest")
+        st.warning("🟠 Heavy burden: large share goes to interest")
     else:
         st.error("🔴 Very heavy burden")
 
     st.info("""
-A loan is not just a number.  
-It is a multi-year contract with your future self.
+**Conceptual Insight**
+
+In early years, most of your EMI goes to interest.  
+This means long tenures make loans expensive.
+
+Banks earn interest first.  
+You reduce principal slowly.
 """)
 
 # =========================================================
@@ -129,6 +136,13 @@ with tab2:
         col3.metric("🏁 New Remaining Tenure", f"{new_n} months")
 
         st.success("💡 Small actions can buy back years of your life.")
+
+    st.info("""
+**Conceptual Insight**
+
+Prepayment works best early.  
+Reducing principal early reduces future interest dramatically.
+""")
 
 # =========================================================
 # TAB 3 — DECISION
@@ -177,36 +191,35 @@ with tab3:
         st.warning("📉 Mathematically, PREPAYING wins in this scenario.")
 
     st.info("""
-Prepaying gives a guaranteed return equal to the loan rate.  
-Investing gives uncertain but potentially higher returns.
+Prepay return = guaranteed = loan rate  
+Investment return = uncertain  
+Decision depends on risk tolerance.
 """)
 
     st.markdown("---")
-    st.header("🏠 Case Scenarios (Self-Explanatory Mode)")
+    st.header("🏠 Case Scenarios")
 
     rent = st.number_input("Monthly Rent", value=8000)
     discount_rate = st.number_input("Discount Rate (%)", value=8.0)
     price_growth = st.number_input("House Price Growth (%)", value=3.0)
 
-    st.write("Click a scenario to see how the decision changes:")
-
     col1,col2,col3,col4 = st.columns(4)
 
-    if col1.button("1️⃣ No price growth"):
+    if col1.button("No price growth"):
         price_growth = 0
-        st.info("If house prices don't grow, renting often wins.")
+        st.info("If prices don't grow → renting stronger")
 
-    if col2.button("2️⃣ High price growth"):
+    if col2.button("High growth"):
         price_growth = 10
-        st.info("If prices grow strongly, buying becomes attractive.")
+        st.info("High growth → buying stronger")
 
-    if col3.button("3️⃣ Interest rate rises"):
+    if col3.button("Interest ↑"):
         interest_rate += 1
-        st.info("Higher interest increases EMI → renting stronger.")
+        st.info("Higher interest → renting stronger")
 
-    if col4.button("4️⃣ Rent rises"):
+    if col4.button("Rent ↑"):
         rent *= 1.25
-        st.info("Higher rent makes buying relatively cheaper.")
+        st.info("Higher rent → buying stronger")
 
     emi_case, n_case, _ = calculate_emi(loan_amount, interest_rate, remaining_years)
 
@@ -221,13 +234,15 @@ Investing gives uncertain but potentially higher returns.
     st.metric("NPV Difference (Buy − Rent)", f"₹ {diff:,.0f}")
 
     if diff < 0:
-        st.success("Buying wins in this scenario.")
+        st.success("Buying wins")
     else:
-        st.warning("Renting wins in this scenario.")
+        st.warning("Renting wins")
 
     st.info("""
-NPV compares the present value of all future costs.  
-Lower cost option = better financial decision.
+**How to interpret NPV**
+
+NPV converts all future cash flows into today's value.  
+Lower total cost option is financially better.
 """)
 
     # =========================
@@ -249,6 +264,13 @@ Lower cost option = better financial decision.
     ax.plot(rates,vals)
     ax.axhline(0,linestyle="--")
     st.pyplot(fig)
+
+    st.info("""
+Where the line crosses zero = break-even interest rate.
+
+Below zero → buying cheaper  
+Above zero → renting cheaper  
+""")
 
     # =========================
     # HEATMAP
@@ -275,46 +297,11 @@ Lower cost option = better financial decision.
     fig2,ax2=plt.subplots()
     sns.heatmap(df,cmap="RdYlGn",center=0)
     st.pyplot(fig2)
+
     st.info("""
- 
-**How to read this graph**
+Green → Buying better  
+Red → Renting better  
 
-This chart shows how the buy vs rent decision changes as interest rates change.
-
-• Each point = NPV difference between buying and renting  
-• The horizontal line at 0 = decision boundary  
-
-If the line is:
-• **Below zero → Buying is cheaper**
-• **Above zero → Renting is cheaper**
-
-Where the line crosses zero is the **break-even interest rate**.
-
-Teaching insight:
-Interest rate is often the most powerful variable in housing decisions.
-A small rate increase can flip the decision from buy → rent.
-""")
-st.info("""
-**How to read this heatmap**
-
-This chart shows how the decision changes across TWO variables:
-
-X-axis → Interest rate  
-Y-axis → House price growth  
-
-Each square shows whether buying or renting is better.
-
-Color meaning:
-• Green → Buying is better  
-• Red → Renting is better  
-• Yellow → Close call  
-
-What this teaches:
-There is no single correct answer.
-The decision depends on assumptions.
-
-Students should notice:
-• High interest + low growth → Rent  
-• Low interest + high growth → Buy  
-• Middle zone → uncertain decision
+There is no single correct decision.  
+It depends on interest rates and price growth.
 """)
