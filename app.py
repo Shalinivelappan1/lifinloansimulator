@@ -39,13 +39,25 @@ def npv_stream(payment, discount_rate, months):
 # =========================================================
 st.title("🧪 Debt Decision Lab")
 
+st.info("""
+This simulator helps you understand:
+
+• How loans behave  
+• Why prepayment matters  
+• Prepay vs invest decision  
+• Buy vs rent using NPV  
+""")
+
+# =========================================================
+# INPUTS
+# =========================================================
 loan_amount = st.number_input("Loan Amount (₹)", value=500000)
-interest_rate = st.number_input("Loan Interest Rate (%)", value=10.0)
+interest_rate = st.number_input("Interest Rate (%)", value=10.0)
 remaining_years = st.number_input("Remaining Tenure (Years)", value=5)
 
 emi, n, r = calculate_emi(loan_amount, interest_rate, remaining_years)
-st.write(f"💸 EMI ≈ ₹ {emi:,.0f}")
 
+st.write(f"💸 EMI ≈ ₹ {emi:,.0f}")
 st.markdown("---")
 
 # =========================================================
@@ -64,36 +76,37 @@ with tab1:
     total_payment = emi * n
     total_interest = total_payment - loan_amount
 
-    st.metric("Total Interest", f"₹ {total_interest:,.0f}")
-    st.metric("Total Payment", f"₹ {total_payment:,.0f}")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Monthly EMI", f"₹ {emi:,.0f}")
+    c2.metric("Total Interest", f"₹ {total_interest:,.0f}")
+    c3.metric("Total Payment", f"₹ {total_payment:,.0f}")
 
     st.subheader("⏳ Time Commitment")
-    st.write(f"You are committing **{n} months ({remaining_years} years)**.")
+    st.write(f"You are committing **{n} months ({remaining_years} years)** to this loan.")
 
     st.subheader("⚠️ Burden Meter")
     ratio = total_interest / loan_amount
 
     if ratio < 0.3:
-        st.success("Light burden")
+        st.success("🟢 Light burden")
     elif ratio < 0.7:
-        st.warning("Heavy interest burden")
+        st.warning("🟠 Heavy burden: a large share of payment is interest")
     else:
-        st.error("Very heavy burden")
+        st.error("🔴 Very heavy burden")
 
     st.info("""
-**Conceptual Insight**
-
-EMIs are front-loaded with interest.  
-In early years, most of your payment goes to the bank, not to reducing debt.  
-This is why long tenures are profitable for banks.
+A loan is not just a number.  
+It is a multi-year contract with your future self.
 """)
 
 # =========================================================
 # TAB 2 — PREPAYMENT
 # =========================================================
 with tab2:
-    prepay_year = st.number_input("Prepay after years", 1, remaining_years, 2)
-    prepay_amount = st.number_input("Prepayment amount", value=50000)
+    st.header("📉 Prepayment Impact")
+
+    prepay_year = st.number_input("Prepay after how many years?", 1, remaining_years, 2)
+    prepay_amount = st.number_input("Prepayment Amount (₹)", value=50000)
 
     k = prepay_year * 12
     balance_before = remaining_balance(loan_amount, r, emi, k)
@@ -102,31 +115,29 @@ with tab2:
     if new_balance > 0:
         new_n = math.log(emi / (emi - new_balance * r)) / math.log(1 + r)
         new_n = int(math.ceil(new_n))
-        months_saved = (n - k) - new_n
 
-        st.metric("Months Reduced", months_saved)
-        st.metric("New Tenure", f"{new_n} months")
+        original_remaining = n - k
+        new_remaining_payment = emi * new_n
+        original_remaining_payment = emi * original_remaining
 
-    st.info("""
-**Conceptual Insight**
+        interest_saved = original_remaining_payment - new_remaining_payment
+        months_saved = original_remaining - new_n
 
-Prepayment works because:
-Interest is calculated on outstanding balance.
+        col1, col2, col3 = st.columns(3)
+        col1.metric("⏳ Months Reduced", months_saved)
+        col2.metric("💰 Interest Saved", f"₹ {interest_saved:,.0f}")
+        col3.metric("🏁 New Remaining Tenure", f"{new_n} months")
 
-Reducing principal early reduces:
-• future interest  
-• time in debt  
-• total payment
-""")
+        st.success("💡 Small actions can buy back years of your life.")
 
 # =========================================================
-# TAB 3 — DECISION + CASE
+# TAB 3 — DECISION
 # =========================================================
 with tab3:
-    st.header("Prepay vs Invest")
+    st.header("📊 Prepay vs Invest")
 
-    extra_monthly = st.number_input("Extra per month", value=5000)
-    expected_return = st.number_input("Investment return %", value=12.0)
+    extra_monthly = st.number_input("Extra per month (₹)", value=5000)
+    expected_return = st.number_input("Expected investment return (%)", value=12.0)
 
     balance = loan_amount
     months = 0
@@ -141,40 +152,61 @@ with tab3:
         months += 1
 
     interest_saved = (emi*n - loan_amount) - (total_payment_with_prepay - loan_amount)
+    years_saved = (n - months)/12
     fv = future_value_monthly_sip(extra_monthly, expected_return, n)
 
-    st.metric("Interest Saved", f"₹ {interest_saved:,.0f}")
-    st.metric("Investment Value", f"₹ {fv:,.0f}")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("🅰️ Prepay Loan")
+        st.write(f"Loan closes in: **{months} months**")
+        st.write(f"Years saved: **{years_saved:.1f}**")
+        st.write(f"Interest saved: **₹ {interest_saved:,.0f}**")
+
+    with col2:
+        st.write("🅱️ Invest Instead")
+        st.write(f"Future investment value: **₹ {fv:,.0f}**")
+
+    st.markdown("---")
+
+    st.subheader("🏁 Verdict")
+
+    if fv > interest_saved:
+        st.success("📈 Mathematically, INVESTING wins in this scenario.")
+    else:
+        st.warning("📉 Mathematically, PREPAYING wins in this scenario.")
 
     st.info("""
-**Conceptual Insight**
-
-Prepay return = guaranteed = loan interest rate  
-Investment return = uncertain  
-
-So the decision depends on risk tolerance.
+Prepaying gives a guaranteed return equal to the loan rate.  
+Investing gives uncertain but potentially higher returns.
 """)
 
     st.markdown("---")
-    st.header("🏠 Case Scenarios")
+    st.header("🏠 Case Scenarios (Self-Explanatory Mode)")
 
     rent = st.number_input("Monthly Rent", value=8000)
     discount_rate = st.number_input("Discount Rate (%)", value=8.0)
-    price_growth = st.number_input("Price Growth (%)", value=3.0)
+    price_growth = st.number_input("House Price Growth (%)", value=3.0)
+
+    st.write("Click a scenario to see how the decision changes:")
 
     col1,col2,col3,col4 = st.columns(4)
 
-    if col1.button("No growth"):
+    if col1.button("1️⃣ No price growth"):
         price_growth = 0
+        st.info("If house prices don't grow, renting often wins.")
 
-    if col2.button("High growth"):
+    if col2.button("2️⃣ High price growth"):
         price_growth = 10
+        st.info("If prices grow strongly, buying becomes attractive.")
 
-    if col3.button("Rate ↑"):
+    if col3.button("3️⃣ Interest rate rises"):
         interest_rate += 1
+        st.info("Higher interest increases EMI → renting stronger.")
 
-    if col4.button("Rent ↑"):
+    if col4.button("4️⃣ Rent rises"):
         rent *= 1.25
+        st.info("Higher rent makes buying relatively cheaper.")
 
     emi_case, n_case, _ = calculate_emi(loan_amount, interest_rate, remaining_years)
 
@@ -186,21 +218,22 @@ So the decision depends on risk tolerance.
 
     diff = (pv_buy - pv_resale) - pv_rent
 
-    st.metric("NPV Difference", f"₹ {diff:,.0f}")
+    st.metric("NPV Difference (Buy − Rent)", f"₹ {diff:,.0f}")
+
+    if diff < 0:
+        st.success("Buying wins in this scenario.")
+    else:
+        st.warning("Renting wins in this scenario.")
 
     st.info("""
-**Conceptual Insight**
-
-NPV converts all future cash flows into today's value.
-
-If Buy NPV < Rent NPV → Buy  
-If Rent NPV < Buy NPV → Rent
+NPV compares the present value of all future costs.  
+Lower cost option = better financial decision.
 """)
 
     # =========================
     # GRAPH
     # =========================
-    st.subheader("NPV vs Interest Rate")
+    st.subheader("📈 NPV vs Interest Rate")
 
     rates = np.linspace(2,15,25)
     vals=[]
@@ -220,7 +253,7 @@ If Rent NPV < Buy NPV → Rent
     # =========================
     # HEATMAP
     # =========================
-    st.subheader("Sensitivity Heatmap")
+    st.subheader("🔥 Sensitivity Heatmap")
 
     rate_range=np.linspace(5,15,12)
     growth_range=np.linspace(0,10,12)
