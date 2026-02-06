@@ -264,17 +264,17 @@ Lower total cost option is financially better.
     ax.plot(rates,vals)
     ax.axhline(0,linestyle="--")
     st.pyplot(fig)
-        st.markdown("""
-    ### 📈 How to read this chart
-
-    The horizontal line at **0** is the break-even point.
-
-    • Below 0 → Buying is cheaper  
-    • Above 0 → Renting is cheaper  
-
-    Where the line crosses zero = decision flip.
-    """)
-
+            st.markdown("""
+        ### 📈 How to read this chart
+    
+        The horizontal line at **0** is the break-even point.
+    
+        • Below 0 → Buying is cheaper  
+        • Above 0 → Renting is cheaper  
+    
+        Where the line crosses zero = decision flip.
+        """)
+    
 
 
     # =========================
