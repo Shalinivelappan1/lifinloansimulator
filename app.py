@@ -5,10 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# =========================
-# PAGE CONFIG
-# =========================
-st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪")
+st.set_page_config(page_title="Debt Decision Lab", page_icon="🧪", layout="centered")
 
 # =========================
 # FUNCTIONS
@@ -22,6 +19,15 @@ def calculate_emi(principal, annual_rate, years):
         emi = principal * r * (1 + r)**n / ((1 + r)**n - 1)
     return emi, n, r
 
+def remaining_balance(P, r, emi, k):
+    return P * (1 + r)**k - emi * ((1 + r)**k - 1) / r
+
+def future_value_monthly_sip(pmt, annual_return, months):
+    r = annual_return / (12 * 100)
+    if r == 0:
+        return pmt * months
+    return pmt * ((1 + r)**months - 1) / r
+
 def npv_stream(payment, discount_rate, months):
     r = discount_rate / (12 * 100)
     if r == 0:
@@ -32,127 +38,172 @@ def npv_stream(payment, discount_rate, months):
 # HEADER
 # =========================
 st.title("🧪 Debt Decision Lab")
+st.caption("Explore loans, escape faster, decide smarter")
 
 # =========================
 # GLOBAL INPUTS
 # =========================
+st.subheader("📥 Your Loan")
+
 loan_amount = st.number_input("Loan Amount (₹)", value=500000)
 interest_rate = st.number_input("Interest Rate (%)", value=10.0)
-years = st.number_input("Tenure (Years)", value=5)
+remaining_years = st.number_input("Remaining Years", value=5)
 
-emi, n, r = calculate_emi(loan_amount, interest_rate, years)
-st.write(f"💸 EMI: **₹ {emi:,.0f}**")
+emi, n, r = calculate_emi(loan_amount, interest_rate, remaining_years)
+
+st.write(f"💸 EMI ≈ **₹ {emi:,.0f}**")
+
+st.markdown("---")
 
 # =========================
 # TABS
 # =========================
-tab1, tab2, tab3 = st.tabs(["EMI", "Prepayment", "Decision Lab"])
+tab1, tab2, tab3 = st.tabs([
+    "🧾 EMI Lab",
+    "🧨 Prepayment Lab",
+    "⚖️ Decision Lab"
+])
+
+# ======================================================
+# TAB 1 — EMI LAB
+# ======================================================
+with tab1:
+    st.header("🧾 EMI Lab")
+
+    total_payment = emi * n
+    total_interest = total_payment - loan_amount
+
+    st.metric("Total Interest", f"₹ {total_interest:,.0f}")
+    st.metric("Total Payment", f"₹ {total_payment:,.0f}")
+
+# ======================================================
+# TAB 2 — PREPAYMENT
+# ======================================================
+with tab2:
+    st.header("🧨 Prepayment Lab")
+
+    prepay_year = st.number_input("Prepay after years", 1, remaining_years, 2)
+    prepay_amount = st.number_input("Prepayment amount", value=50000)
+
+    k = prepay_year * 12
+    balance_before = remaining_balance(loan_amount, r, emi, k)
+    new_balance = balance_before - prepay_amount
+
+    if new_balance > 0:
+        new_n = math.log(emi / (emi - new_balance * r)) / math.log(1 + r)
+        new_n = int(math.ceil(new_n))
+
+        months_saved = (n - k) - new_n
+        st.metric("Months Saved", months_saved)
 
 # ======================================================
 # TAB 3 — DECISION + NPV
 # ======================================================
 with tab3:
+    st.header("⚖️ Prepay vs Invest + NPV Case")
 
-    st.header("🏠 Buy vs Rent NPV Lab")
+    extra_monthly = st.number_input("Extra per month", value=5000)
+    expected_return = st.number_input("Investment return %", value=12.0)
 
-    rent = st.number_input("Monthly Rent (₹)", value=8000)
-    discount_rate = st.number_input("Discount Rate (%)", value=8.0)
-    price_growth = st.number_input("Price Growth (%)", value=3.0)
+    # ----- Prepay sim
+    balance = loan_amount
+    months = 0
+    total_payment_with_prepay = 0
 
-    # =========================
-    # SCENARIO BUTTONS
-    # =========================
-    st.subheader("🎬 Case Scenarios")
+    while balance > 0 and months < 1000:
+        interest = balance * r
+        payment = emi + extra_monthly
+        principal_paid = payment - interest
+        balance -= principal_paid
+        total_payment_with_prepay += payment
+        months += 1
 
-    col1, col2, col3, col4 = st.columns(4)
+    interest_saved = (emi*n - loan_amount) - (total_payment_with_prepay - loan_amount)
 
-    if col1.button("Scenario 1"):
+    # ----- Invest
+    fv = future_value_monthly_sip(extra_monthly, expected_return, n)
+
+    st.subheader("Decision")
+    col1, col2 = st.columns(2)
+
+    col1.metric("Interest Saved", f"₹ {interest_saved:,.0f}")
+    col2.metric("Future Value", f"₹ {fv:,.0f}")
+
+    # ======================================================
+    # NPV BLOCK (FOR CASE TEACHING)
+    # ======================================================
+    st.markdown("---")
+    st.header("🏠 Case NPV Block")
+
+    rent = st.number_input("Monthly Rent", value=8000)
+    discount_rate = st.number_input("Discount rate %", value=8.0)
+    price_growth = st.number_input("House price growth %", value=3.0)
+
+    # Scenario buttons
+    c1,c2,c3,c4 = st.columns(4)
+    if c1.button("Scenario 1"):
         price_growth = 0
-
-    if col2.button("Scenario 2"):
+    if c2.button("Scenario 2"):
         price_growth = 10
-
-    if col3.button("Scenario 3"):
+    if c3.button("Scenario 3"):
         interest_rate += 1
-
-    if col4.button("Scenario 4"):
+    if c4.button("Scenario 4"):
         rent *= 1.25
 
-    emi, n, r = calculate_emi(loan_amount, interest_rate, years)
+    emi_case, n_case, _ = calculate_emi(loan_amount, interest_rate, remaining_years)
 
-    # =========================
-    # NPV
-    # =========================
-    pv_buy = npv_stream(emi, discount_rate, n)
-    pv_rent = npv_stream(rent, discount_rate, n)
+    pv_buy = npv_stream(emi_case, discount_rate, n_case)
+    pv_rent = npv_stream(rent, discount_rate, n_case)
 
-    future_price = loan_amount * ((1 + price_growth/100) ** years)
-    pv_resale = future_price / ((1 + discount_rate/100) ** years)
+    future_price = loan_amount*((1+price_growth/100)**remaining_years)
+    pv_resale = future_price/((1+discount_rate/100)**remaining_years)
 
     npv_buy = pv_buy - pv_resale
     npv_rent = pv_rent
-    npv_diff = npv_buy - npv_rent
+    diff = npv_buy - npv_rent
 
-    st.subheader("📊 NPV Results")
+    st.subheader("NPV Result")
+    d1,d2,d3 = st.columns(3)
+    d1.metric("Buy PV", f"₹ {npv_buy:,.0f}")
+    d2.metric("Rent PV", f"₹ {npv_rent:,.0f}")
+    d3.metric("Difference", f"₹ {diff:,.0f}")
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("PV Buy", f"₹ {npv_buy:,.0f}")
-    c2.metric("PV Rent", f"₹ {npv_rent:,.0f}")
-    c3.metric("NPV (Buy-Rent)", f"₹ {npv_diff:,.0f}")
-
-    if npv_diff < 0:
-        st.success("Buying wins")
-    else:
-        st.warning("Renting wins")
-
-    # =========================
-    # GRAPH: NPV vs RATE
-    # =========================
-    st.subheader("📈 NPV vs Interest Rate")
-
-    rates = np.linspace(2, 15, 30)
-    npvs = []
+    # Graph NPV vs interest
+    st.subheader("NPV vs Interest")
+    rates = np.linspace(2,15,25)
+    vals=[]
 
     for rate in rates:
-        emi_temp, _, _ = calculate_emi(loan_amount, rate, years)
-        pv_buy_temp = npv_stream(emi_temp, discount_rate, n)
-        future_price_temp = loan_amount * ((1 + price_growth/100) ** years)
-        pv_resale_temp = future_price_temp / ((1 + discount_rate/100) ** years)
-        npv_temp = (pv_buy_temp - pv_resale_temp) - pv_rent
-        npvs.append(npv_temp)
+        emi_t,_,_=calculate_emi(loan_amount,rate,remaining_years)
+        pv_buy_t=npv_stream(emi_t,discount_rate,n_case)
+        future_price_t=loan_amount*((1+price_growth/100)**remaining_years)
+        pv_resale_t=future_price_t/((1+discount_rate/100)**remaining_years)
+        vals.append((pv_buy_t-pv_resale_t)-pv_rent)
 
-    fig, ax = plt.subplots()
-    ax.plot(rates, npvs)
-    ax.axhline(0, linestyle="--")
-    ax.set_xlabel("Interest Rate")
-    ax.set_ylabel("NPV")
+    fig,ax=plt.subplots()
+    ax.plot(rates,vals)
+    ax.axhline(0,linestyle="--")
     st.pyplot(fig)
 
-    # =========================
-    # HEATMAP
-    # =========================
-    st.subheader("🔥 Sensitivity Heatmap")
+    # Heatmap
+    st.subheader("Sensitivity Heatmap")
 
-    rate_range = np.linspace(5, 15, 12)
-    growth_range = np.linspace(0, 10, 12)
+    rate_range=np.linspace(5,15,10)
+    growth_range=np.linspace(0,10,10)
 
-    heat = []
-
+    heat=[]
     for g in growth_range:
-        row = []
+        row=[]
         for rate in rate_range:
-            emi_temp, _, _ = calculate_emi(loan_amount, rate, years)
-            pv_buy_temp = npv_stream(emi_temp, discount_rate, n)
-            future_price_temp = loan_amount * ((1 + g/100) ** years)
-            pv_resale_temp = future_price_temp / ((1 + discount_rate/100) ** years)
-            npv_temp = (pv_buy_temp - pv_resale_temp) - pv_rent
-            row.append(npv_temp)
+            emi_t,_,_=calculate_emi(loan_amount,rate,remaining_years)
+            pv_buy_t=npv_stream(emi_t,discount_rate,n_case)
+            future_price_t=loan_amount*((1+g/100)**remaining_years)
+            pv_resale_t=future_price_t/((1+discount_rate/100)**remaining_years)
+            row.append((pv_buy_t-pv_resale_t)-pv_rent)
         heat.append(row)
 
-    heat_df = pd.DataFrame(heat, index=np.round(growth_range,1), columns=np.round(rate_range,1))
+    df=pd.DataFrame(heat,index=np.round(growth_range,1),columns=np.round(rate_range,1))
 
-    fig2, ax2 = plt.subplots()
-    sns.heatmap(heat_df, cmap="RdYlGn", center=0)
-    ax2.set_xlabel("Interest Rate")
-    ax2.set_ylabel("Price Growth")
+    fig2,ax2=plt.subplots()
+    sns.heatmap(df,cmap="RdYlGn",center=0)
     st.pyplot(fig2)
