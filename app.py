@@ -245,87 +245,77 @@ NPV converts all future cash flows into today's value.
 Lower total cost option is financially better.
 """)
 
-    # =========================
+        # =========================
     # GRAPH
     # =========================
     st.subheader("📈 NPV vs Interest Rate")
 
-    rates = np.linspace(2,15,25)
-    vals=[]
+    rates = np.linspace(2, 15, 25)
+    vals = []
 
     for rate in rates:
-        emi_t,_,_=calculate_emi(loan_amount,rate,remaining_years)
-        pv_buy_t=npv_stream(emi_t,discount_rate,n_case)
-        future_price_t=loan_amount*((1+price_growth/100)**remaining_years)
-        pv_resale_t=future_price_t/((1+discount_rate/100)**remaining_years)
-        vals.append((pv_buy_t-pv_resale_t)-pv_rent)
+        emi_t, _, _ = calculate_emi(loan_amount, rate, remaining_years)
+        pv_buy_t = npv_stream(emi_t, discount_rate, n_case)
+        future_price_t = loan_amount * ((1 + price_growth/100) ** remaining_years)
+        pv_resale_t = future_price_t / ((1 + discount_rate/100) ** remaining_years)
+        vals.append((pv_buy_t - pv_resale_t) - pv_rent)
 
-    fig,ax=plt.subplots()
-    ax.plot(rates,vals)
-    ax.axhline(0,linestyle="--")
+    fig, ax = plt.subplots()
+    ax.plot(rates, vals)
+    ax.axhline(0, linestyle="--")
     st.pyplot(fig)
-            st.markdown("""
-        ### 📈 How to read this chart
-    
-        The horizontal line at **0** is the break-even point.
-    
-        • Below 0 → Buying is cheaper  
-        • Above 0 → Renting is cheaper  
-    
-        Where the line crosses zero = decision flip.
-        """)
-    
 
+    st.markdown("""
+    ### 📈 How to read this chart
+
+    The horizontal line at **0** is the break-even point.
+
+    • Below 0 → Buying is cheaper  
+    • Above 0 → Renting is cheaper  
+
+    Where the line crosses zero = decision flip.
+    """)
 
     # =========================
     # HEATMAP
     # =========================
     st.subheader("🔥 Sensitivity Heatmap")
 
-    rate_range=np.linspace(5,15,12)
-    growth_range=np.linspace(0,10,12)
+    rate_range = np.linspace(5, 15, 12)
+    growth_range = np.linspace(0, 10, 12)
 
-    heat=[]
+    heat = []
 
     for g in growth_range:
-        row=[]
+        row = []
         for rate in rate_range:
-            emi_t,_,_=calculate_emi(loan_amount,rate,remaining_years)
-            pv_buy_t=npv_stream(emi_t,discount_rate,n_case)
-            future_price_t=loan_amount*((1+g/100)**remaining_years)
-            pv_resale_t=future_price_t/((1+discount_rate/100)**remaining_years)
-            row.append((pv_buy_t-pv_resale_t)-pv_rent)
+            emi_t, _, _ = calculate_emi(loan_amount, rate, remaining_years)
+            pv_buy_t = npv_stream(emi_t, discount_rate, n_case)
+            future_price_t = loan_amount * ((1 + g/100) ** remaining_years)
+            pv_resale_t = future_price_t / ((1 + discount_rate/100) ** remaining_years)
+            row.append((pv_buy_t - pv_resale_t) - pv_rent)
         heat.append(row)
 
-    df=pd.DataFrame(heat,index=np.round(growth_range,1),columns=np.round(rate_range,1))
+    df = pd.DataFrame(
+        heat,
+        index=np.round(growth_range, 1),
+        columns=np.round(rate_range, 1)
+    )
 
-    fig2,ax2=plt.subplots()
-    sns.heatmap(df,cmap="RdYlGn",center=0)
+    fig2, ax2 = plt.subplots()
+    sns.heatmap(df, cmap="RdYlGn", center=0)
     st.pyplot(fig2)
 
     st.markdown("""
-### 🔥 How to read this heatmap
+    ### 🔥 How to read this heatmap
 
-Each cell shows whether **buying** or **renting** is financially better under different assumptions.
+    Each cell shows whether **buying** or **renting** is better.
 
-**Axes**
-- X-axis → Interest rate  
-- Y-axis → House price growth  
+    X-axis → Interest rate  
+    Y-axis → Price growth  
 
-**Colors**
-- 🟢 Green → Buying is financially better  
-- 🔴 Red → Renting is financially better  
-- 🟡 Yellow → Very close decision  
+    🟢 Green → Buy better  
+    🔴 Red → Rent better  
 
-**Key learning**
-
-There is no single correct answer to buy vs rent.  
-The decision depends on assumptions about:
-
-• Interest rates  
-• Property price growth  
-• Rent levels  
-
-Small changes in these can flip the decision.
-""")
-
+    Small changes in assumptions can flip the decision.
+    """)
