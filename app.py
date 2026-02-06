@@ -276,7 +276,7 @@ Lower cost option = better financial decision.
     sns.heatmap(df,cmap="RdYlGn",center=0)
     st.pyplot(fig2)
     st.info("""
-  st.info("""
+ 
 **How to read this graph**
 
 This chart shows how the buy vs rent decision changes as interest rates change.
