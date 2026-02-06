@@ -275,3 +275,46 @@ Lower cost option = better financial decision.
     fig2,ax2=plt.subplots()
     sns.heatmap(df,cmap="RdYlGn",center=0)
     st.pyplot(fig2)
+    st.info("""
+  st.info("""
+**How to read this graph**
+
+This chart shows how the buy vs rent decision changes as interest rates change.
+
+• Each point = NPV difference between buying and renting  
+• The horizontal line at 0 = decision boundary  
+
+If the line is:
+• **Below zero → Buying is cheaper**
+• **Above zero → Renting is cheaper**
+
+Where the line crosses zero is the **break-even interest rate**.
+
+Teaching insight:
+Interest rate is often the most powerful variable in housing decisions.
+A small rate increase can flip the decision from buy → rent.
+""")
+st.info("""
+**How to read this heatmap**
+
+This chart shows how the decision changes across TWO variables:
+
+X-axis → Interest rate  
+Y-axis → House price growth  
+
+Each square shows whether buying or renting is better.
+
+Color meaning:
+• Green → Buying is better  
+• Red → Renting is better  
+• Yellow → Close call  
+
+What this teaches:
+There is no single correct answer.
+The decision depends on assumptions.
+
+Students should notice:
+• High interest + low growth → Rent  
+• Low interest + high growth → Buy  
+• Middle zone → uncertain decision
+""")
