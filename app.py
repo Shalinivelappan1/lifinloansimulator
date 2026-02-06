@@ -266,16 +266,16 @@ Lower total cost option is financially better.
     st.pyplot(fig)
 
    st.markdown("""
-### 📈 How to read this chart
-
-The horizontal line at **0** is the break-even point.
-
-- When the curve is **below 0** → Buying is financially cheaper  
-- When the curve is **above 0** → Renting is financially cheaper  
-
-The point where the curve crosses zero shows the  
-**interest rate at which the decision flips**.
-""")
+    ### 📈 How to read this chart
+    
+    The horizontal line at **0** is the break-even point.
+    
+    - When the curve is **below 0** → Buying is financially cheaper  
+    - When the curve is **above 0** → Renting is financially cheaper  
+    
+    The point where the curve crosses zero shows the  
+    **interest rate at which the decision flips**.
+    """)
 
 
     # =========================
